@@ -79,16 +79,19 @@ def extract_pages_from_document(document: Document) -> List[dict]:
             if len(direct_text) >= TEXT_LENGTH_THRESHOLD:
                 logger.info(f"Page {page_number}: Direct text extraction extracted {len(direct_text)} characters.")
                 raw_text = direct_text
+                is_ocr = False
             else:
                 logger.info(f"Page {page_number}: Direct text empty or below threshold ({len(direct_text)} chars). Running OCR...")
                 pil_img = Image.open(io.BytesIO(img_bytes))
                 raw_text = ocr_image(pil_img)
+                is_ocr = True
                 logger.info(f"Page {page_number}: OCR extracted {len(raw_text)} characters.")
 
             pages_data.append({
                 "page_number": page_number,
                 "raw_text": raw_text,
                 "image_path": rendered_image_path,
+                "is_ocr": is_ocr,
             })
         doc.close()
 
@@ -106,6 +109,7 @@ def extract_pages_from_document(document: Document) -> List[dict]:
             "page_number": 1,
             "raw_text": raw_text,
             "image_path": file_path,
+            "is_ocr": True,
         })
 
     return pages_data

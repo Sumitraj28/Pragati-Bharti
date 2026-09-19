@@ -1,10 +1,12 @@
+from typing import List
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.db.models import Document, DocumentStatus, DocumentRole, User
+from app.db.models import Document, DocumentStatus, DocumentRole, User, Question
 from app.api.deps import get_current_user
 from app.schemas.document import DocumentUploadResponse, DocumentDetailResponse
+from app.schemas.question import QuestionResponse
 from app.services.document_service import validate_file_content, MAX_FILE_SIZE
 from app.storage.local_storage import save_file
 from app.workers.tasks import process_document
@@ -85,3 +87,30 @@ def get_document(
         doc_role=doc.doc_role.value,
         created_at=doc.created_at,
     )
+
+
+@router.get("/{document_id}/questions", response_model=List[QuestionResponse])
+def get_document_questions(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns all extracted questions for a given document.
+    Must return 404 if the document does not exist or does not belong to the user.
+    """
+    doc = db.query(Document).filter(Document.id == document_id).first()
+    if not doc or doc.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
+
+    questions = (
+        db.query(Question)
+        .filter(Question.document_id == document_id)
+        .order_by(Question.question_number.asc().nulls_last(), Question.id.asc())
+        .all()
+    )
+    return questions
+

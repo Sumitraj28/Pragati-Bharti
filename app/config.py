@@ -22,9 +22,13 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    # OCR / LLM API Keys
+    # OCR / LLM Configuration
     OCR_API_KEY: Optional[str] = None
     LLM_API_KEY: Optional[str] = None
+    OPENAI_API_KEY: Optional[str] = None
+    LLM_PROVIDER: str = "openai"
+    LLM_BASE_URL: str = "https://api.openai.com/v1"
+    LLM_MODEL: str = "gpt-4o-mini"
 
     if SettingsConfigDict is not None:
         model_config = SettingsConfigDict(
