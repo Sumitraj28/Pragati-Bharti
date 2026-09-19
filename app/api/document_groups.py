@@ -12,7 +12,47 @@ from app.schemas.document_group import (
 from app.schemas.document import DocumentDetailResponse
 from app.services.answer_matcher import match_answers_for_group
 
+from typing import List
+
 router = APIRouter(prefix="/document-groups", tags=["Document Groups"])
+
+
+@router.get("", response_model=List[DocumentGroupResponse])
+def list_document_groups(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Lists all document groups owned by the current user.
+    """
+    groups = (
+        db.query(DocumentGroup)
+        .filter(DocumentGroup.owner_id == current_user.id)
+        .order_by(DocumentGroup.created_at.desc())
+        .all()
+    )
+    result = []
+    for grp in groups:
+        docs = [
+            DocumentDetailResponse(
+                id=d.id,
+                status=d.status.value,
+                filename=d.filename,
+                doc_role=d.doc_role.value,
+                created_at=d.created_at,
+            )
+            for d in grp.documents
+        ]
+        result.append(
+            DocumentGroupResponse(
+                id=grp.id,
+                name=grp.name,
+                owner_id=grp.owner_id,
+                created_at=grp.created_at,
+                documents=docs,
+            )
+        )
+    return result
 
 
 @router.post("", response_model=DocumentGroupResponse, status_code=status.HTTP_201_CREATED)

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
@@ -35,6 +35,16 @@ class DocumentReviewItemsResponse(BaseModel):
         default_factory=list,
         description="Answers extracted from answer keys that could not be matched with high confidence",
     )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PageResponse(BaseModel):
+    id: int = Field(..., description="Unique page ID", examples=[1])
+    document_id: int = Field(..., description="Document ID", examples=[101])
+    page_number: int = Field(..., description="1-indexed page number", examples=[1])
+    raw_text: Optional[str] = Field(None, description="Extracted raw text for page")
+    image_url: Optional[str] = Field(None, description="Relative URL to fetch rendered page image", examples=["/documents/101/pages/1/image"])
 
     model_config = ConfigDict(from_attributes=True)
 

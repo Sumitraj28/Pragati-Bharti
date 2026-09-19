@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.db.models import Answer, Document, Question, User
+from app.db.models import Answer, Document, Question, User, QuestionStatus
 from app.api.deps import get_current_user
-from app.schemas.question import QuestionResponse
+from app.schemas.question import QuestionResponse, QuestionUpdateRequest
 from app.schemas.answer import QuestionAnswerResponse, AnswerResponse
 
 router = APIRouter(prefix="/questions", tags=["Questions"])
@@ -89,3 +89,39 @@ def get_question_answer(
         answer=None,
         reason=reason,
     )
+
+
+@router.patch("/{question_id}", response_model=QuestionResponse)
+def update_question(
+    question_id: int,
+    body: QuestionUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Updates or reviews an extracted question (e.g. approving, editing text/options, or marking status).
+    """
+    question = (
+        db.query(Question)
+        .join(Document, Question.document_id == Document.id)
+        .filter(Question.id == question_id, Document.owner_id == current_user.id)
+        .first()
+    )
+    if not question:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question not found",
+        )
+
+    if body.question_text is not None:
+        question.question_text = body.question_text
+    if body.question_number is not None:
+        question.question_number = body.question_number
+    if body.options is not None:
+        question.options = body.options
+    if body.status is not None:
+        question.status = QuestionStatus(body.status)
+
+    db.commit()
+    db.refresh(question)
+    return question

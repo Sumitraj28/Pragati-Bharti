@@ -16,3 +16,10 @@ class QuestionResponse(BaseModel):
     created_at: datetime = Field(..., description="Timestamp of extraction", examples=["2026-09-19T10:15:35Z"])
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class QuestionUpdateRequest(BaseModel):
+    question_text: Optional[str] = Field(None, description="Updated question text")
+    question_number: Optional[int] = Field(None, description="Updated question number")
+    options: Optional[List[str]] = Field(None, description="Updated options list")
+    status: Optional[str] = Field(None, description="New question status ('extracted', 'needs_review')")
