@@ -136,6 +136,7 @@ class Answer(Base):
     matched = Column(Boolean, default=False, nullable=False)
     confidence_score = Column(Float, nullable=True)
     source_document_id = Column(Integer, ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
+    unmatched_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     # Relationships

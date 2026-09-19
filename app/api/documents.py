@@ -3,9 +3,9 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
-from app.db.models import Document, DocumentStatus, DocumentRole, User, Question
+from app.db.models import Document, DocumentStatus, DocumentRole, User, Question, Answer, QuestionStatus
 from app.api.deps import get_current_user
-from app.schemas.document import DocumentUploadResponse, DocumentDetailResponse
+from app.schemas.document import DocumentUploadResponse, DocumentDetailResponse, DocumentReviewItemsResponse
 from app.schemas.question import QuestionResponse
 from app.services.document_service import validate_file_content, MAX_FILE_SIZE
 from app.storage.local_storage import save_file
@@ -113,4 +113,57 @@ def get_document_questions(
         .all()
     )
     return questions
+
+
+@router.get("/{document_id}/review-items", response_model=DocumentReviewItemsResponse)
+def get_document_review_items(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns all review items for a document:
+    - Questions with status='needs_review'
+    - Unmatched answers (for this document or its document group)
+    Must return 404 if document does not exist or does not belong to the user.
+    """
+    doc = db.query(Document).filter(Document.id == document_id).first()
+    if not doc or doc.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
+
+    # 1. Questions with status='needs_review'
+    needs_review_questions = (
+        db.query(Question)
+        .filter(Question.document_id == document_id, Question.status == QuestionStatus.NEEDS_REVIEW)
+        .order_by(Question.question_number.asc().nulls_last(), Question.id.asc())
+        .all()
+    )
+
+    # 2. Unmatched answers:
+    # Look for answers where source_document_id == document_id,
+    # or if document belongs to a group, any unmatched answers from documents in that group
+    doc_ids_to_check = [document_id]
+    if doc.group_id:
+        sibling_ids = (
+            db.query(Document.id)
+            .filter(Document.group_id == doc.group_id)
+            .all()
+        )
+        doc_ids_to_check = [sid[0] for sid in sibling_ids]
+
+    unmatched_answers = (
+        db.query(Answer)
+        .filter(Answer.source_document_id.in_(doc_ids_to_check), Answer.matched == False)
+        .order_by(Answer.id.asc())
+        .all()
+    )
+
+    return DocumentReviewItemsResponse(
+        document_id=doc.id,
+        needs_review_questions=needs_review_questions,
+        unmatched_answers=unmatched_answers,
+    )
 
