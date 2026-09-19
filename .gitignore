@@ -50,3 +50,6 @@ celerybeat.pid
 # OS files
 .DS_Store
 Thumbs.db
+
+# Storage uploads
+uploads/
