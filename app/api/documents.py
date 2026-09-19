@@ -7,6 +7,7 @@ from app.api.deps import get_current_user
 from app.schemas.document import DocumentUploadResponse, DocumentDetailResponse
 from app.services.document_service import validate_file_content, MAX_FILE_SIZE
 from app.storage.local_storage import save_file
+from app.workers.tasks import process_document
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -49,6 +50,9 @@ async def upload_document(
     db.add(document)
     db.commit()
     db.refresh(document)
+
+    # Enqueue background processing task via Celery
+    process_document.delay(document.id)
 
     return DocumentUploadResponse(
         id=document.id,

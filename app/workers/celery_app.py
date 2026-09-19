@@ -5,6 +5,7 @@ celery_app = Celery(
     "document_intelligence_worker",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
+    include=["app.workers.tasks"],
 )
 
 celery_app.conf.update(
@@ -14,9 +15,3 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
 )
-
-
-@celery_app.task(name="tasks.ping")
-def ping_task():
-    """Placeholder task for testing worker communication."""
-    return {"status": "pong"}
