@@ -1,0 +1,40 @@
+[
+  {
+    "id": 24,
+    "document_id": 66,
+    "question_number": 1,
+    "question_text": "What is the capital of France?",
+    "options": [
+      "(A) Berlin",
+      "(B) Paris",
+      "(C) Rome",
+      "(D) Madrid"
+    ],
+    "question_type": "multiple_choice",
+    "source_pages": [
+      1
+    ],
+    "confidence_score": 1.0,
+    "status": "extracted",
+    "created_at": "2026-09-19T13:55:46.870812"
+  },
+  {
+    "id": 25,
+    "document_id": 66,
+    "question_number": 2,
+    "question_text": "What is the boiling point of water at standard atmospheric pressure?",
+    "options": [
+      "(A) 50\u00b0C",
+      "(B) 100\u00b0C",
+      "(C) 150\u00b0C",
+      "(D) 200\u00b0C"
+    ],
+    "question_type": "multiple_choice",
+    "source_pages": [
+      1
+    ],
+    "confidence_score": 1.0,
+    "status": "extracted",
+    "created_at": "2026-09-19T13:55:46.870832"
+  }
+]

@@ -1,0 +1,19 @@
+[
+  {
+    "id": 3,
+    "document_id": 32,
+    "question_number": 3,
+    "question_text": "Acar travels 160 metersin 5 socondsatconstantvelecity, Calculate the average speed ofthe car",
+    "options": [
+      "(A)25m's",
+      "(C)50m's"
+    ],
+    "question_type": "multiple_choice",
+    "source_pages": [
+      1
+    ],
+    "confidence_score": 0.7,
+    "status": "extracted",
+    "created_at": "2026-09-19T13:46:15.539910"
+  }
+]

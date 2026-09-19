@@ -1,0 +1,29 @@
+{
+  "document_id": 66,
+  "filename": "sample_question_paper.pdf",
+  "matched_answers": [
+    {
+      "id": 37,
+      "question_id": 24,
+      "raw_answer_text": "(B) Paris",
+      "matched": true,
+      "confidence_score": 1.0,
+      "source_document_id": 67,
+      "unmatched_reason": null,
+      "created_at": "2026-09-19T13:55:48.759112"
+    }
+  ],
+  "needs_review_questions": [],
+  "unmatched_answers": [
+    {
+      "id": 38,
+      "question_id": null,
+      "raw_answer_text": "Photosynthesis produces glucose and oxygen from sunlight and water",
+      "matched": false,
+      "confidence_score": 0.33,
+      "source_document_id": 67,
+      "unmatched_reason": "Question number 99 not found in document questions, and maximum text similarity is below threshold (0.33 < 0.70).",
+      "created_at": "2026-09-19T13:55:48.759120"
+    }
+  ]
+}

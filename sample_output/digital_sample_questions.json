@@ -1,0 +1,30 @@
+[
+  {
+    "id": 4,
+    "document_id": 33,
+    "question_number": 1,
+    "question_text": "Which organelle is widely known as the powerhouse of the cell?",
+    "options": null,
+    "question_type": "subjective",
+    "source_pages": [
+      1
+    ],
+    "confidence_score": 0.7,
+    "status": "extracted",
+    "created_at": "2026-09-19T13:46:28.046071"
+  },
+  {
+    "id": 5,
+    "document_id": 33,
+    "question_number": 2,
+    "question_text": "What is the acceleration due to gravity on the Earth surface?",
+    "options": null,
+    "question_type": "subjective",
+    "source_pages": [
+      1
+    ],
+    "confidence_score": 0.7,
+    "status": "extracted",
+    "created_at": "2026-09-19T13:46:28.046073"
+  }
+]
