@@ -100,6 +100,43 @@ def test_find_best_question_match():
     assert "99 not found" in reason
 
 
+def test_answer_matcher_fixed_pair_unit_test():
+    """Unit test answer matcher with fixed question/answer pairs."""
+    fixed_question = Question(
+        id=42,
+        document_id=1,
+        question_number=5,
+        question_text="What is the unit of electric charge?",
+        options=["(A) Coulomb", "(B) Ampere", "(C) Volt", "(D) Ohm"],
+        status=QuestionStatus.EXTRACTED,
+    )
+    questions = [fixed_question]
+
+    # Test 1: Fixed pair with exact question number
+    ans1 = {"question_number": 5, "raw_answer_text": "(A) Coulomb", "ambiguous": False}
+    matched_q, conf, reason = find_best_question_match(ans1, questions)
+    assert matched_q is not None
+    assert matched_q.id == 42
+    assert conf == 1.0
+    assert reason is None
+
+    # Test 2: Fixed pair with text similarity fallback (no number provided)
+    ans2 = {"question_number": None, "raw_answer_text": "Coulomb", "ambiguous": True}
+    matched_q, conf, reason = find_best_question_match(ans2, questions)
+    assert matched_q is not None
+    assert matched_q.id == 42
+    assert conf >= 0.70
+    assert reason is None
+
+    # Test 3: Fixed pair that does not match
+    ans3 = {"question_number": None, "raw_answer_text": "Mitochondria produces ATP", "ambiguous": False}
+    matched_q, conf, reason = find_best_question_match(ans3, questions)
+    assert matched_q is None
+    assert conf < 0.70
+    assert reason is not None
+    assert "below threshold" in reason
+
+
 def test_document_groups_and_review_items_api():
     db = SessionLocal()
     try:

@@ -149,3 +149,65 @@ def test_document_questions_endpoints_and_isolation():
     b_q_res = client.get(f"/questions/{fake_q_id}", headers=headers_b)
     assert b_q_res.status_code == 404
     assert b_q_res.json()["detail"] == "Question not found"
+
+
+from unittest.mock import patch
+from app.services.extraction import call_llm_with_retry
+
+
+def test_call_llm_json_parsing_success():
+    """Test successful parsing of valid JSON from LLM (including code fences)."""
+    mock_llm_content = """```json
+[
+  {
+    "question_number": 1,
+    "question_text": "What is the speed of sound in air?",
+    "options": ["(A) 343 m/s", "(B) 300,000 km/s"],
+    "question_type": "multiple_choice",
+    "source_pages": [1],
+    "ambiguous": false
+  }
+]
+```"""
+    with patch("app.services.extraction._call_llm_api", return_value=mock_llm_content) as mock_api:
+        results = call_llm_with_retry("sample prompt text")
+        assert mock_api.call_count == 1
+        assert len(results) == 1
+        assert results[0]["question_number"] == 1
+        assert "speed of sound" in results[0]["question_text"]
+        assert results[0]["options"] == ["(A) 343 m/s", "(B) 300,000 km/s"]
+
+
+def test_call_llm_json_retry_on_invalid_json():
+    """Test that invalid JSON triggers a retry, and succeeds on the second attempt."""
+    bad_json = "I am an AI assistant. Here is your question: {invalid"
+    good_json = """[
+  {
+    "question_number": 2,
+    "question_text": "Define momentum.",
+    "options": null,
+    "question_type": "subjective",
+    "source_pages": [1],
+    "ambiguous": false
+  }
+]"""
+    with patch("app.services.extraction._call_llm_api", side_effect=[bad_json, good_json]) as mock_api:
+        results = call_llm_with_retry("sample prompt text")
+        assert mock_api.call_count == 2
+        assert len(results) == 1
+        assert results[0]["question_number"] == 2
+        assert results[0]["question_text"] == "Define momentum."
+
+
+def test_call_llm_fallback_to_rule_based_on_persistent_failure():
+    """Test that persistent invalid JSON falls back gracefully to rule-based parsing."""
+    bad_json_1 = "invalid json response 1"
+    bad_json_2 = "invalid json response 2"
+    prompt_with_question = "[PAGE 1]\nQuestion 1: What is kinetic energy?\n(A) Energy of motion\n(B) Stored energy"
+
+    with patch("app.services.extraction._call_llm_api", side_effect=[bad_json_1, bad_json_2]) as mock_api:
+        results = call_llm_with_retry(prompt_with_question)
+        assert mock_api.call_count == 2
+        assert len(results) >= 1
+        assert results[0]["question_number"] == 1
+        assert "kinetic energy" in results[0]["question_text"]

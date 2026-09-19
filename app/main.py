@@ -29,14 +29,17 @@ app.include_router(questions_router)
 app.include_router(document_groups_router)
 
 
-@app.get("/health", tags=["Health"])
+from app.schemas import HealthResponse
+
+
+@app.get("/health", response_model=HealthResponse, tags=["Health"])
 async def health_check():
     """Health check route returning status and metadata."""
-    return {
-        "status": "ok",
-        "service": settings.PROJECT_NAME,
-        "environment": settings.ENVIRONMENT,
-    }
+    return HealthResponse(
+        status="ok",
+        service=settings.PROJECT_NAME,
+        environment=settings.ENVIRONMENT,
+    )
 
 
 if __name__ == "__main__":

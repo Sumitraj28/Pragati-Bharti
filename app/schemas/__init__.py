@@ -1,13 +1,13 @@
 """Pydantic request and response schemas."""
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class HealthResponse(BaseModel):
-    status: str
-    service: str
-    environment: str
+    status: str = Field("ok", description="Service health status", examples=["ok"])
+    service: str = Field(..., description="Name of the service", examples=["document-intelligence-service"])
+    environment: str = Field(..., description="Current deployment environment", examples=["development"])
 
 
 class DocumentBase(BaseModel):

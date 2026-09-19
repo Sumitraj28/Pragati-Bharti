@@ -1,0 +1,432 @@
+{
+  "info": {
+    "_postman_id": "9b12cf34-7a31-4c12-b94f-1248ab41cd91",
+    "name": "Document Intelligence Service API",
+    "description": "Comprehensive Postman collection covering Authentication, Document Ingestion, Question Extraction, Answer Key Matching, Document Groups, and Review Items.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "documentId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "questionId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "groupId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teacher@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user account with email and password."
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set(\"token\", jsonData.access_token);",
+                  "    console.log(\"Saved access token to collection variable: token\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"teacher@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate user credentials and automatically store the returned JWT access token into the collection variable 'token'."
+          }
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Fetch the profile of the currently authenticated user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Document Ingestion & Status",
+      "item": [
+        {
+          "name": "Upload PDF Document (Question Paper)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set(\"documentId\", jsonData.id);",
+                  "    console.log(\"Saved document ID to collection variable: documentId\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "sample_docs/sample_question_paper.pdf",
+                  "description": "PDF document to upload (enforces 20MB limit and magic byte check)"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents"]
+            },
+            "description": "Upload a valid PDF exam document. Returns document ID and initial status ('pending')."
+          }
+        },
+        {
+          "name": "Upload Image Document (Answer Key / Scanned)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "sample_docs/scanned_sample.png",
+                  "description": "PNG or JPG document image"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents"]
+            },
+            "description": "Upload a scanned exam image (PNG/JPG). Triggers OCR page extraction."
+          }
+        },
+        {
+          "name": "Upload Invalid File (Deliberate Failure)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "text",
+                  "value": "plain text payload",
+                  "contentType": "text/plain",
+                  "description": "Invalid file type not permitted by the API"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents"]
+            },
+            "description": "Deliberately upload an invalid file type or invalid magic bytes. Expects 400 Bad Request."
+          }
+        },
+        {
+          "name": "Get Document Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}"]
+            },
+            "description": "Check the status of an uploaded document (pending, processing, done, failed) and role."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Question Extraction",
+      "item": [
+        {
+          "name": "Get All Questions for Document",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (Array.isArray(jsonData) && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set(\"questionId\", jsonData[0].id);",
+                  "    console.log(\"Saved first question ID: \" + jsonData[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}", "questions"]
+            },
+            "description": "List all extracted questions for the specified document."
+          }
+        },
+        {
+          "name": "Get Single Question by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/questions/{{questionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "{{questionId}}"]
+            },
+            "description": "Fetch detailed information for a single extracted question."
+          }
+        },
+        {
+          "name": "Get Matched Answer for Question",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/questions/{{questionId}}/answer",
+              "host": ["{{baseUrl}}"],
+              "path": ["questions", "{{questionId}}", "answer"]
+            },
+            "description": "Get the matched answer for this question, or 'unmatched' with reason."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Document Groups & Linking",
+      "item": [
+        {
+          "name": "Create Document Group",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set(\"groupId\", jsonData.id);",
+                  "    console.log(\"Saved group ID to collection variable: groupId\");",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"2026 Science Midterm Examination\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-groups",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-groups"]
+            },
+            "description": "Create a new document group to link a question paper and its answer key."
+          }
+        },
+        {
+          "name": "Add Document to Group",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document_id\": {{documentId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/document-groups/{{groupId}}/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["document-groups", "{{groupId}}", "add"]
+            },
+            "description": "Add a document to a document group and automatically trigger cross-document answer matching."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Human Review & Quality Assurance",
+      "item": [
+        {
+          "name": "Get Document Review Items",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/documents/{{documentId}}/review-items",
+              "host": ["{{baseUrl}}"],
+              "path": ["documents", "{{documentId}}", "review-items"]
+            },
+            "description": "Fetch all items requiring human review for a document (questions with status=needs_review and unmatched answers)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Health Check",
+      "item": [
+        {
+          "name": "Service Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check if API service is running and healthy."
+          }
+        }
+      ]
+    }
+  ]
+}
